@@ -61,7 +61,8 @@ class Generator():
 
         checkpoint = torch.load(model_path,
                                 map_location=self.device) 
-        self.diffuser.load_state_dict({k.split("_module.module.")[1]: v for k, v in checkpoint["diffuser"].items()})
+        # self.diffuser.load_state_dict({k.split("_module.module.")[1]: v for k, v in checkpoint["diffuser"].items()})
+        self.diffuser.load_state_dict(checkpoint['diffuser'])
         self.diffuser.eval()
 
         self.dataset = None
@@ -176,7 +177,7 @@ class Generator():
         # group samples into batches
         batches = num_to_groups(len(dataset_idxs), 
             # a heuristic for how many images will fit on the GPU
-            (self.cfg.optimization.batch_size * 4) // (N_clean + N_noisy))
+            (self.cfg.optimization.batch_size) // (N_clean + N_noisy))
 
         batch_idx_start = 0
 

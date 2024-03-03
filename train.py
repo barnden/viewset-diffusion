@@ -20,7 +20,7 @@ from model.diffusion import ViewsetDiffusion
 
 from utils import set_seed
 
-import wandb
+# import wandb
 from omegaconf import DictConfig, OmegaConf
 import hydra
 
@@ -35,12 +35,12 @@ class Lite(LightningLite):
     def run(self, cfg):
         vis_dir = os.getcwd()
 
-        dict_cfg = OmegaConf.to_container(
-            cfg, resolve=True, throw_on_missing=True
-        )
+        # dict_cfg = OmegaConf.to_container(
+        #     cfg, resolve=True, throw_on_missing=True
+        # )
 
-        wandb_run = wandb.init(project=cfg.wandb.project, reinit=True,
-                    config=dict_cfg,group="decoder_debug")
+        # wandb_run = wandb.init(project=cfg.wandb.project, reinit=True,
+        #             config=dict_cfg,group="decoder_debug")
 
         set_seed(cfg.general.random_seed)
 
@@ -66,25 +66,25 @@ class Lite(LightningLite):
                   cfg.optimization.continue_from_checkpoint)
             checkpoint = self.load(os.path.join(cfg.optimization.continue_from_checkpoint,
                                                 "model.pth")) 
-            pretrained_dict = {}
-            non_loaded_keys = []
+            # pretrained_dict = {}
+            # non_loaded_keys = []
             model_dict = diffuser.state_dict()
-            for k, v in checkpoint["diffuser"].items():
-                if "reconstructor" in k and ("reconstructor.init_conv" not in k and \
-                                             "reconstructor.out" not in k):
-                    pretrained_dict[k.split("_module.module.")[1]] = v
-                else:
-                    non_loaded_keys.append(k)
-            model_dict.update(pretrained_dict)
+            # for k, v in checkpoint["diffuser"].items():
+            #     if "reconstructor" in k and ("reconstructor.init_conv" not in k and \
+            #                                  "reconstructor.out" not in k):
+            #         pretrained_dict[k.split("_module.module.")[1]] = v
+            #     else:
+            #         non_loaded_keys.append(k)
+            # model_dict.update(pretrained_dict)
             diffuser.load_state_dict(model_dict)
             iteration_start = checkpoint["iteration"]
-            print('Loaded layers: ', pretrained_dict.keys())
-            print('Not loaded layers: ', non_loaded_keys)
-            if cfg.optimization.freeze_pretrained:
-                print('freezing the loaded parameters')
-                for name, param in diffuser.named_parameters():
-                    if name in pretrained_dict.keys():
-                        param.requires_grad = False
+            # print('Loaded layers: ', pretrained_dict.keys())
+            # print('Not loaded layers: ', non_loaded_keys)
+            # if cfg.optimization.freeze_pretrained:
+            #     print('freezing the loaded parameters')
+            #     for name, param in diffuser.named_parameters():
+            #         if name in pretrained_dict.keys():
+            #             param.requires_grad = False
         else:
             iteration_start = 0
 
@@ -167,12 +167,12 @@ class Lite(LightningLite):
 
                 if self.is_global_zero and (iteration + 1) % 10 == 0:
                     if len(losses) == 2:
-                        wandb.log({"loss_unseen": np.log(losses[0].item() + 1e-8)}, step=iteration)
-                        wandb.log({"loss_seen": np.log(losses[1].item() +1e-8)}, step=iteration)
+                        print({"loss_unseen": np.log(losses[0].item() + 1e-8)}, iteration)
+                        print({"loss_seen": np.log(losses[1].item() +1e-8)}, iteration)
                     
-                    wandb.log({"total_loss": np.log(total_loss.item())}, step=iteration)
+                    print({"total_loss": np.log(total_loss.item())}, iteration)
 
-                    wandb.log({"val_loss": np.log(val_loss.item())}, step=iteration)
+                    print({"val_loss": np.log(val_loss.item())}, iteration)
 
                 if iteration % (cfg.optimization.n_iter // 10) == 0 and self.is_global_zero:
                     try:
@@ -233,8 +233,6 @@ class Lite(LightningLite):
                                              "model_{}.pth".format(iteration + 1)))
                     diffuser.train()
 
-        wandb_run.finish()
-
 def log_visualisations(diffuser, data, noisy_input, iteration, cfg,
                        split):
     diffuser.module.module.vis_iteration(data["x_in"] * 2 - 1, 
@@ -281,9 +279,9 @@ def log_visualisations(diffuser, data, noisy_input, iteration, cfg,
                     )
                 rows = [torch.hstack([im for im in sample_row]) for sample_row in cond_view_result]
                 cond_view_result = torch.vstack(rows).permute(2, 0, 1)
-                wandb.log({"cond_view_{}_{}".format(cond_view_idx, split): 
-                            wandb.Image(cond_view_result)},
-                            step=iteration)
+                # wandb.log({"cond_view_{}_{}".format(cond_view_idx, split): 
+                #             wandb.Image(cond_view_result)},
+                #             step=iteration)
                 
                 cond_view_gt = all_gt[:, cond_view_idx].permute(0, 2, 3, 1)
                 cond_view_gt = cond_view_gt.reshape(
@@ -291,9 +289,9 @@ def log_visualisations(diffuser, data, noisy_input, iteration, cfg,
                     )
                 rows = [torch.hstack([im for im in sample_row]) for sample_row in cond_view_gt]
                 cond_view_gt = torch.vstack(rows).permute(2, 0, 1)
-                wandb.log({"cond_gt_{}_{}".format(cond_view_idx, split):
-                            wandb.Image(cond_view_gt)},
-                            step=iteration)
+                # wandb.log({"cond_gt_{}_{}".format(cond_view_idx, split):
+                #             wandb.Image(cond_view_gt)},
+                #             step=iteration)
 
         for diffused_view_idx in range(data["x_in"].shape[1]):
             diffused_view_result = all_images[:, diffused_views_start + diffused_view_idx].permute(0, 2, 3, 1)
@@ -303,9 +301,9 @@ def log_visualisations(diffuser, data, noisy_input, iteration, cfg,
             rows = [torch.hstack([im for im in sample_row]) for sample_row in diffused_view_result]
             diffused_view_result = torch.vstack(rows).permute(2, 0, 1)
             print(diffused_view_result.shape)
-            wandb.log({"diffused_view_{}_{}_{}".format(diffused_view_idx, cf_guidance_weight, split): 
-                        wandb.Image(diffused_view_result)},
-                        step=iteration)
+            # wandb.log({"diffused_view_{}_{}_{}".format(diffused_view_idx, cf_guidance_weight, split): 
+            #             wandb.Image(diffused_view_result)},
+            #             step=iteration)
         
         grids = []
         for rot_idx in range(diffused_views_start+data["x_in"].shape[1], all_images.shape[1]):
@@ -315,9 +313,9 @@ def log_visualisations(diffuser, data, noisy_input, iteration, cfg,
             grid = torch.vstack(rows)
             grids.append((np.clip(grid.permute(2, 0, 1).detach().cpu().numpy(), 0, 1)*255).astype(np.uint8))
         
-        wandb.log({"rot_{}_{}".format(cf_guidance_weight, split):
-                   wandb.Video(np.asarray(grids), fps=4, format="gif")},
-                   step=iteration)
+        # wandb.log({"rot_{}_{}".format(cf_guidance_weight, split):
+        #            wandb.Video(np.asarray(grids), fps=4, format="gif")},
+        #            step=iteration)
 
     diffuser.train()
 

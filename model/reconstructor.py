@@ -69,8 +69,8 @@ class VoxelReconstructor(nn.Module):
             idxs_to_render: idxs of cameras to render the volume from 
         """
         # ============ Building input images ============
-        imgs = torch.cat([cond["x_cond"], imgs], dim=1)
-        imgs = torch.cat([imgs, cond["pose_embed"]], dim=2)
+        imgs = torch.cat([imgs, cond["x_cond"]], dim=1)
+        imgs = torch.cat([cond["pose_embed"], imgs], dim=2)
         if self.cfg.model.unet.self_condition:
             self_conditioning = torch.cat([cond["x_cond"],
                                             cond["x_self_condition"]],
@@ -199,7 +199,8 @@ class TriplaneReconstructor(nn.Module):
 
         # ============ Building source cameras, images and timesteps
         if idxs_to_keep is None:
-            idxs_to_keep = torch.arange(imgs.shape[1])
+            # idxs_to_keep = torch.arange(imgs.shape[1])
+            idxs_to_keep = torch.arange(1)
 
         B, Cond, C, H, W = imgs.shape
 
@@ -212,7 +213,9 @@ class TriplaneReconstructor(nn.Module):
             timesteps = timesteps.unsqueeze(1).expand(B, noisy_imgs_in)
             timesteps = torch.cat([timesteps[:, :1].expand(B, cond["x_cond"].shape[1]) * 0,
                                    timesteps], dim=1)[..., idxs_to_keep]
-
+            
+        # print(idxs_to_keep)
+        # print(imgs[:, idxs_to_keep, ...].shape)
         assert len(idxs_to_keep) == 1, "Only accepting one input image"
         # ============ Volume reconstruction ============
         triplane_features = self.reconstructor(imgs[:, idxs_to_keep, ...], 

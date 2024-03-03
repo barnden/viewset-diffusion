@@ -11,7 +11,7 @@ from collections import namedtuple
 from functools import partial
 import tqdm
 
-import wandb
+# import wandb
 
 # adapted from https://github.com/lucidrains/denoising-diffusion-pytorch/blob/main/denoising_diffusion_pytorch/denoising_diffusion_pytorch.py#L97
 ModelPrediction =  namedtuple('ModelPrediction', ['pred_noise', 'pred_x_start'])
@@ -144,9 +144,7 @@ class ViewsetDiffusion(GaussianDiffusion):
                                       stratified_sampling=self.cfg.render.stratified_sampling)
         
         # compute non-reduced loss
-        loss = self.loss_fn(volume_model_out[:, :, :3, ...], 
-                            cond["training_imgs"][:, idxs_to_render, :3, ...], 
-                            reduction = 'none')
+        loss = self.loss_fn(volume_model_out[:, :, :3, ...], cond["training_imgs"][:, idxs_to_render, :3, ...], reduction = 'none')
         
         # weigh loss
         was_dropped_out = torch.logical_not(torch.isin(idxs_to_render, idxs_to_keep))
@@ -266,8 +264,8 @@ class ViewsetDiffusion(GaussianDiffusion):
             rows.append(r_sil_out[0, img_idx, ...].expand(h, w, 3).cpu()) 
         vis_columns.append(torch.vstack(rows))
 
-        im_log = wandb.Image(np.clip(torch.hstack(vis_columns).numpy(), 0.0, 1.0), caption="Vis")
-        wandb.log({"{}_vis".format(split): im_log}, step=iteration)
+        # im_log = wandb.Image(np.clip(torch.hstack(vis_columns).numpy(), 0.0, 1.0), caption="Vis")
+        # wandb.log({"{}_vis".format(split): im_log}, step=iteration)
     
     @torch.no_grad()
     def ddim_sample(self, shape, cond, return_all_timesteps = False,

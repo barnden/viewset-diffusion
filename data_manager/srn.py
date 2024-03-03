@@ -8,7 +8,7 @@ import torch
 from torchvision import transforms
 
 from . import augment_cameras
-SHAPENET_DATASET_ROOT = None # Change this line
+SHAPENET_DATASET_ROOT = '/DATA' # Change this line
 assert SHAPENET_DATASET_ROOT is not None, "Update the location of the SRN Shapenet Dataset"
 
 class SRNDataset():
@@ -340,10 +340,10 @@ class SRNDataset():
         pose_paths = sorted(glob.glob(os.path.join(dir_path, "pose", "*")))
         assert len(rgb_paths) == len(pose_paths)
 
-        if not hasattr(self, "all_rgbs"):
-            self.all_rgbs = {}
-            self.all_poses = {}
-            self.all_above_0_z_ind = {}
+        # if not hasattr(self, "all_rgbs"):
+        self.all_rgbs = {}
+        self.all_poses = {}
+        self.all_above_0_z_ind = {}
 
         if example_id not in self.all_rgbs.keys():
             self.all_rgbs[example_id] = []
